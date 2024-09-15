@@ -1,0 +1,138 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #10151d;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.ai-banner-generator {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+h1 {
+  font-size: 2.25rem;
+  font-weight: bold;
+  /* margin-bottom: 2rem; */
+  text-align: center;
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.input-section,
+.preview-section {
+  flex: 1;
+}
+
+
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+
+
+.color-palette {
+  display: flex;
+  gap: 0.5rem;
+}
+
+input[type="color"] {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  border: none;
+}
+/* make color inside circle larger */
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 9999px;
+}
+
+.file-upload {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.generate-button {
+  width: 100%;
+  /* padding: 0.75rem; */
+  background-color: #805ad5;
+  margin-top: 1rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: semibold;
+  margin-bottom: 1rem;
+}
+
+
+img {
+  width: 100%;
+  border-radius: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .content-wrapper {
+    flex-direction: row;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+
+  .preview-section {
+    background-color: #f0f0f0;
+  }
+
+  input[type="text"],
+  select {
+    background-color: #ffffff;
+    border-color: #d1d5db;
+    color: #1a202c;
+  }
+}
