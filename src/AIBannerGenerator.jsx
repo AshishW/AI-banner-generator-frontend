@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { fabric } from 'fabric';
 import BannerEditor from './NewBannerEditor';
 import './AIBannerGenerator.css';
+import ConfettiExplosion from 'react-confetti-explosion';
 
 const AIBannerGenerator = () => {
     const canvasRef = useRef(null);
     const [canvas, setCanvas] = useState(null);
     const [promotion, setPromotion] = useState('');
-    const [theme, setTheme] = useState('Professional advertisement banner, minimalistic'); 
+    const [theme, setTheme] = useState('fresh groceries advertisement banner, minimalistic'); 
     const [resolution, setResolution] = useState('1360x800');
     const [customWidth, setCustomWidth] = useState('');
     const [customHeight, setCustomHeight] = useState('');
@@ -18,6 +19,10 @@ const AIBannerGenerator = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [showBannerEditor, setShowBannerEditor] = useState(false);
     const [showThemeInput, setShowThemeInput] = useState(false);
+    const [showModal, setShowModal] = useState(false); // New state for modal
+
+    // for confetti
+    const [isExploding, setIsExploding] = useState(false);
 
     useEffect(() => {
         const newCanvas = new fabric.Canvas(canvasRef.current);
@@ -89,7 +94,7 @@ const AIBannerGenerator = () => {
                 color_palette: colorPalette,
                 images: imageDataList
             };
-
+            console.log('Request data:', requestData);
             const response = await fetch('http://localhost:5000/generate_banner', {
                 method: 'POST',
                 headers: {
@@ -126,7 +131,7 @@ const AIBannerGenerator = () => {
         }
     };
 
-    const renderBanner = (bannerData) => {
+    const renderBanner = useCallback((bannerData) => {
         if (!canvas) return;
 
         canvas.clear();
@@ -174,7 +179,7 @@ const AIBannerGenerator = () => {
                         fontStyle: obj.fontStyle,
                         fontFamily: obj.fontFamily,
                         textAlign: obj.textAlign,
-                        selectable: false
+                        selectable: false,
                     });
                     canvas.add(text);
                 }
@@ -186,8 +191,16 @@ const AIBannerGenerator = () => {
             // Convert canvas to image after all objects are rendered
             const imageDataUrl = canvas.toDataURL({ format: 'png' });
             setBannerPreview(imageDataUrl);
+            setIsExploding(true);
         });
-    };
+    }, [canvas]);
+
+    useEffect(() => {
+        if (isExploding) {
+            const timer = setTimeout(() => setIsExploding(false), 3000); // Reset after 3 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [isExploding]);
 
     const downloadBanner = () => {
         const link = document.createElement('a');
@@ -197,12 +210,15 @@ const AIBannerGenerator = () => {
     };
 
     const openAdvancedEditor = () => {
-        // Convert canvas to JSON and store it in localStorage or pass it to the new window
         const canvasJSON = JSON.stringify(canvas.toJSON());
         localStorage.setItem('canvasData', canvasJSON); 
         localStorage.setItem('canvasResolution', `${canvas.width}x${canvas.height}`);
-        // updating state to show BannerEditor
-        // setShowBannerEditor(true);
+        setShowModal(true); // Open modal
+    };
+
+    const closeModal = () => {
+        setShowModal(false);
+        // Optionally, update the canvas in the main view with changes from the modal
     };
 
     const getFallbackSize = () => {
@@ -233,6 +249,8 @@ const AIBannerGenerator = () => {
 
     return (
         showBannerEditor ? <BannerEditor /> :  
+        <>
+     
         <div className="container">
         <div className="horizontal-line-break"></div>
         <h1>AI Banner Generator</h1>
@@ -330,6 +348,7 @@ const AIBannerGenerator = () => {
             <div id="image-preview-container">
                 {bannerPreview ? (
                     <>
+                       {isExploding && <ConfettiExplosion zIndex={1000} width={1000} particleCount={200}/>}
                         <img id="banner-preview" src={bannerPreview} alt="Banner Preview" />
                         <div>
                             <button id="advanced-edit-button" onClick={openAdvancedEditor}>⚙️ Advanced Edit</button>
@@ -363,6 +382,19 @@ const AIBannerGenerator = () => {
                 </div>
             )}
         </div>
+
+        {/* Modal Overlay */}
+        {showModal && (
+            <div className="modal-overlay">
+                <div className="modal-content">
+                    <button className="close-button" onClick={closeModal}>×</button>
+                    <h2>Advanced Editor</h2>
+                    <canvas ref={canvasRef} className="modal-canvas"></canvas>
+                    <button onClick={closeModal} className="save-button">Save & Close</button>
+                </div>
+            </div>
+        )}
+        </>
     );
 };
 
