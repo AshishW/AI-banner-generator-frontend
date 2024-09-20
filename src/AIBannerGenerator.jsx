@@ -5,6 +5,31 @@ import './AIBannerGenerator.css';
 import ConfettiExplosion from 'react-confetti-explosion';
 
 const AIBannerGenerator = () => {
+    const fontOptions = [
+        "Arial",
+        "Helvetica",
+        "Times New Roman",
+        "Courier",
+        "Georgia",
+        "Trebuchet MS",
+        "Impact",
+        "Comic Sans MS",
+        "Brush Script MT",
+        "Lucida Handwriting",
+        "Monotype Corsiva",
+        "Chalkboard",
+        "Kristen ITC",
+        "Segoe Print",
+        "Segoe Script",
+        "Arial Black",
+        "Century Gothic",
+        "Copperplate Gothic Light",
+        "Franklin Gothic Medium",
+        "Gill Sans MT",
+        "Palatino Linotype",
+        "Tahoma",
+        "Verdana",
+    ];
     const canvasRef = useRef(null);
     const [canvas, setCanvas] = useState(null);
     const [promotion, setPromotion] = useState('');
@@ -20,6 +45,10 @@ const AIBannerGenerator = () => {
     const [showBannerEditor, setShowBannerEditor] = useState(false);
     const [showThemeInput, setShowThemeInput] = useState(false);
     const [showModal, setShowModal] = useState(false); // New state for modal
+    const modalCanvasRef = useRef(null);
+    const [modalCanvas, setModalCanvas] = useState(null);
+    const [selectedObject, setSelectedObject] = useState(null);
+    const [renderedBannerTextData, setRenderedBannerTextData] = useState([])
 
     // for confetti
     const [isExploding, setIsExploding] = useState(false);
@@ -169,10 +198,12 @@ const AIBannerGenerator = () => {
                         console.error('Error loading image:', error, 'Source:', obj.src);
                     }
                 } else if (obj.type === 'text') {
-                    const text = new fabric.Text(obj.text || 'Default Text', {
+                    const textWidth = parseFloat(obj.width) * canvas.width / 100;
+                    const textbox = new fabric.Textbox(obj.text || 'Default Text', {
                         left: parseFloat(obj.left) * canvas.width / 100,
                         top: obj.top ? parseFloat(obj.top) * canvas.height / 100 : 
                              (obj.bottom ? canvas.height - parseFloat(obj.bottom) * canvas.height / 100 - parseFloat(obj.fontSize) : 0),
+                        width: textWidth,
                         fontSize: obj.fontSize,
                         fill: obj.fill,
                         fontWeight: obj.fontWeight,
@@ -180,8 +211,11 @@ const AIBannerGenerator = () => {
                         fontFamily: obj.fontFamily,
                         textAlign: obj.textAlign,
                         selectable: false,
+                        splitByGrapheme: true,
+                        breakWords: true
                     });
-                    canvas.add(text);
+                    canvas.add(textbox);
+                    setRenderedBannerTextData(prev=> prev + [textbox])
                 }
             }
             canvas.renderAll();
@@ -213,12 +247,91 @@ const AIBannerGenerator = () => {
         const canvasJSON = JSON.stringify(canvas.toJSON());
         localStorage.setItem('canvasData', canvasJSON); 
         localStorage.setItem('canvasResolution', `${canvas.width}x${canvas.height}`);
-        setShowModal(true); // Open modal
+        setShowModal(true);
+    };
+
+
+    useEffect(() => {
+        if (showModal && modalCanvasRef.current) {
+            const newCanvas = new fabric.Canvas(modalCanvasRef.current);
+            setModalCanvas(newCanvas);
+
+            const canvasData = localStorage.getItem('canvasData');
+            if (canvasData) {
+                newCanvas.loadFromJSON(canvasData, () => {
+                    newCanvas.renderAll();
+                    // Make background image unselectable
+                    newCanvas.getObjects().forEach(obj => {
+                        if (obj.type === 'image' && obj.left === 0 && obj.top === 0) {
+                            obj.selectable = false;
+                            obj.evented = false;
+                        }
+                    });
+                });
+            }
+
+            const [width, height] = localStorage.getItem('canvasResolution').split('x').map(Number);
+            newCanvas.setWidth(width);
+            newCanvas.setHeight(height);
+
+            // Add event listener for object selection
+            // newCanvas.on('selection:created', (e) => setSelectedObject(e.target));
+            newCanvas.on('selection:created', (e) => {
+                let activeObject = newCanvas.getActiveObject();
+                console.log(activeObject)
+                if (activeObject && activeObject.type === 'textbox') {
+                    setSelectedObject(activeObject);
+                }
+            });
+            // newCanvas.on('selection:updated', (e) => setSelectedObject(e.target));
+            newCanvas.on('selection:cleared', () => setSelectedObject(null));
+            newCanvas.on('selection:updated', (e) => {
+                let activeObject = newCanvas.getActiveObject();
+                console.log(activeObject)
+                if (activeObject && activeObject.type === 'textbox') {
+                    setSelectedObject(activeObject);
+                }
+            });
+
+            return () => {
+                newCanvas.dispose();
+            };
+        }
+    }, [showModal]);
+
+    const handleTextColorChange = (color) => {
+        if (selectedObject && selectedObject.type === 'textbox') {
+            selectedObject.set('fill', color);
+            modalCanvas.renderAll();
+        }
+    };
+
+    const handleFontSizeChange = (size) => {
+        if (selectedObject && selectedObject.type === 'textbox') {
+            selectedObject.set('fontSize', parseInt(size));
+            modalCanvas.renderAll();
+        }
+    };
+
+    const handleFontFamilyChange = (fontFamily) => {
+        if (selectedObject && selectedObject.type === 'textbox') {
+            selectedObject.set('fontFamily', fontFamily);
+            modalCanvas.renderAll();
+        }
     };
 
     const closeModal = () => {
+        if (modalCanvas) {
+            const updatedCanvasJSON = JSON.stringify(modalCanvas.toJSON());
+            localStorage.setItem('canvasData', updatedCanvasJSON);
+            
+            // Update the main canvas with changes from the modal
+            canvas.loadFromJSON(updatedCanvasJSON, () => {
+                canvas.renderAll();
+                setBannerPreview(canvas.toDataURL({ format: 'png' }));
+            });
+        }
         setShowModal(false);
-        // Optionally, update the canvas in the main view with changes from the modal
     };
 
     const getFallbackSize = () => {
@@ -351,7 +464,7 @@ const AIBannerGenerator = () => {
                        {isExploding && <ConfettiExplosion zIndex={1000} width={1000} particleCount={200}/>}
                         <img id="banner-preview" src={bannerPreview} alt="Banner Preview" />
                         <div>
-                            <button id="advanced-edit-button" onClick={openAdvancedEditor}>⚙️ Advanced Edit</button>
+                            <button id="advanced-edit-button" onClick={openAdvancedEditor}>⚙️Edit Design</button>
                             <button id="download-button" onClick={downloadBanner}>Download Banner</button>
                         </div>
                     </>
@@ -389,7 +502,34 @@ const AIBannerGenerator = () => {
                 <div className="modal-content">
                     <button className="close-button" onClick={closeModal}>×</button>
                     <h2>Advanced Editor</h2>
-                    <canvas ref={canvasRef} className="modal-canvas"></canvas>
+                    <div className='text-customization-background-gradient-container'>
+                        <div className="text-customization">
+                            <input 
+                                type="color" 
+                                value={selectedObject ? selectedObject.fill : "#000000"}
+                                onChange={(e) => handleTextColorChange(e.target.value)}
+                            />
+                            <input 
+                                type="number" 
+                                value={selectedObject ? selectedObject.fontSize : 0}
+                                onChange={(e) => handleFontSizeChange(e.target.value)}
+                                min="1"
+                                max="100"
+                            />
+                            <select 
+                                value={selectedObject ? selectedObject.fontFamily : "Arial"}
+                                onChange={(e) => handleFontFamilyChange(e.target.value)}
+                            >
+                                {/* adding font <option> tags */}
+                                {fontOptions.map((font) => (
+                                    <option key={font} value={font}>
+                                        {font}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                     <canvas ref={modalCanvasRef}></canvas>
                     <button onClick={closeModal} className="save-button">Save & Close</button>
                 </div>
             </div>
