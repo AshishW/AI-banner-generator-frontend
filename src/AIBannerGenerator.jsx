@@ -3,6 +3,9 @@ import { fabric } from 'fabric';
 import BannerEditor from './NewBannerEditor';
 import './AIBannerGenerator.css';
 import ConfettiExplosion from 'react-confetti-explosion';
+import { MdAddPhotoAlternate, MdImage } from 'react-icons/md';
+import { LuBringToFront } from "react-icons/lu";
+import { Tooltip } from 'react-tooltip'
 
 const AIBannerGenerator = () => {
     const fontOptions = [
@@ -30,10 +33,11 @@ const AIBannerGenerator = () => {
         "Tahoma",
         "Verdana",
     ];
+    const sampleThemes = ['aesthetic background, kitchen', 'fresh groceries advertisement banner, minimalistic', 'advertisement banner, minimalistic']
     const canvasRef = useRef(null);
     const [canvas, setCanvas] = useState(null);
     const [promotion, setPromotion] = useState('');
-    const [theme, setTheme] = useState('fresh groceries advertisement banner, minimalistic'); 
+    const [theme, setTheme] = useState(sampleThemes[Math.floor(Math.random() * sampleThemes.length)]);
     const [resolution, setResolution] = useState('1360x800');
     const [customWidth, setCustomWidth] = useState('');
     const [customHeight, setCustomHeight] = useState('');
@@ -273,25 +277,29 @@ const AIBannerGenerator = () => {
             const [width, height] = localStorage.getItem('canvasResolution').split('x').map(Number);
             newCanvas.setWidth(width);
             newCanvas.setHeight(height);
+            
+            //resize rendered canvas to rescale it so that doesn't go out of view
+            const canvasContainer = document.querySelector(".canvas-container");
+            let {scaledWidth, scaledHeight} = calculateScaledDimensions(width, height, 800)
+            canvasContainer.style.width = `${scaledWidth}px`;
+            canvasContainer.style.height = `${scaledHeight}px`;
+
 
             // Add event listener for object selection
             // newCanvas.on('selection:created', (e) => setSelectedObject(e.target));
             newCanvas.on('selection:created', (e) => {
                 let activeObject = newCanvas.getActiveObject();
                 console.log(activeObject)
-                if (activeObject && activeObject.type === 'textbox') {
-                    setSelectedObject(activeObject);
-                }
+                setSelectedObject(activeObject);
             });
             // newCanvas.on('selection:updated', (e) => setSelectedObject(e.target));
             newCanvas.on('selection:cleared', () => setSelectedObject(null));
             newCanvas.on('selection:updated', (e) => {
                 let activeObject = newCanvas.getActiveObject();
                 console.log(activeObject)
-                if (activeObject && activeObject.type === 'textbox') {
-                    setSelectedObject(activeObject);
-                }
+                setSelectedObject(activeObject);
             });
+
 
             return () => {
                 newCanvas.dispose();
@@ -305,7 +313,7 @@ const AIBannerGenerator = () => {
             modalCanvas.renderAll();
         }
     };
-
+    
     const handleFontSizeChange = (size) => {
         if (selectedObject && selectedObject.type === 'textbox') {
             selectedObject.set('fontSize', parseInt(size));
@@ -319,6 +327,62 @@ const AIBannerGenerator = () => {
             modalCanvas.renderAll();
         }
     };
+
+    const handleBringToFront = () => {
+        if (selectedObject) {
+            selectedObject.bringToFront();
+            modalCanvas.renderAll();
+        }
+    };
+    
+    const handleImageUploadToCanvas = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                fabric.Image.fromURL(e.target.result, (img) => {
+                    img.scaleToWidth(modalCanvas.width / 2); // Scale image appropriately
+                    modalCanvas.add(img);
+                    modalCanvas.setActiveObject(img)
+                    modalCanvas.renderAll();
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    const handleBackgroundImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (file && modalCanvas) { // Check if modalCanvas exists
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                fabric.Image.fromURL(e.target.result, (img) => {
+                    img.set({
+                        width: modalCanvas.width,
+                        height: modalCanvas.height,
+                        left: 0,
+                        top: 0,
+                        selectable: false,
+                        evented: false
+                    });
+    
+                    // Remove existing background image if present
+                    modalCanvas.getObjects().forEach(obj => {
+                        if (obj.type === 'image' && obj.left === 0 && obj.top === 0) {
+                            modalCanvas.remove(obj);
+                        }
+                    });
+    
+                    modalCanvas.setBackgroundImage(img, () => {
+                        modalCanvas.renderAll();
+                        modalCanvas.backgroundImage.setCoords();
+                    });
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
 
     const closeModal = () => {
         if (modalCanvas) {
@@ -356,6 +420,14 @@ const AIBannerGenerator = () => {
         };
     };
 
+    const calculateScaledDimensions = (originalWidth, originalHeight, Width) => {
+        const aspectRatio = originalWidth / originalHeight;
+        let scaledWidth = Width;
+        let scaledHeight = Width / aspectRatio;
+
+        return { scaledWidth, scaledHeight };
+    };
+
     const toggleThemeInput = () => {
         setShowThemeInput(!showThemeInput);
     };
@@ -380,7 +452,7 @@ const AIBannerGenerator = () => {
                 </div>
                 <div className="input-group theme-group">
                     <label htmlFor="theme">
-                        🌈 Theme:
+                        🌈 Theme: (Background)
                         {!showThemeInput && (
                             <button className="add-theme-btn" onClick={toggleThemeInput}>+</button>
                         )}
@@ -463,7 +535,7 @@ const AIBannerGenerator = () => {
                     <>
                        {isExploding && <ConfettiExplosion zIndex={1000} width={1000} particleCount={200}/>}
                         <img id="banner-preview" src={bannerPreview} alt="Banner Preview" />
-                        <div>
+                        <div className='banner-buttons-container'>
                             <button id="advanced-edit-button" onClick={openAdvancedEditor}>⚙️Edit Design</button>
                             <button id="download-button" onClick={downloadBanner}>Download Banner</button>
                         </div>
@@ -502,23 +574,32 @@ const AIBannerGenerator = () => {
                 <div className="modal-content">
                     <button className="close-button" onClick={closeModal}>×</button>
                     <h2>Advanced Editor</h2>
-                    <div className='text-customization-background-gradient-container'>
-                        <div className="text-customization">
+                    <div className='banner-customization-background-gradient-container'>
+                        <div className="banner-customization">
                             <input 
                                 type="color" 
-                                value={selectedObject ? selectedObject.fill : "#000000"}
+                                value={selectedObject ? selectedObject.fill : "#dbfdff"}
                                 onChange={(e) => handleTextColorChange(e.target.value)}
+                                data-tooltip-id="text-color-tooltip"
+                                data-tooltip-content="Text Color"
                             />
+                            <Tooltip id="text-color-tooltip"/>
                             <input 
                                 type="number" 
-                                value={selectedObject ? selectedObject.fontSize : 0}
+                                className='font-size-input'
+                                placeholder = {selectedObject ? `${selectedObject.fontSize}` : "0"}
                                 onChange={(e) => handleFontSizeChange(e.target.value)}
                                 min="1"
                                 max="100"
+                                data-tooltip-id="font-size-tooltip" 
+                                data-tooltip-content="Font Size"
                             />
+                            <Tooltip id="font-size-tooltip"/>
                             <select 
                                 value={selectedObject ? selectedObject.fontFamily : "Arial"}
                                 onChange={(e) => handleFontFamilyChange(e.target.value)}
+                                data-tooltip-id="font-family-tooltip"
+                                data-tooltip-content="Font Family"
                             >
                                 {/* adding font <option> tags */}
                                 {fontOptions.map((font) => (
@@ -527,6 +608,23 @@ const AIBannerGenerator = () => {
                                     </option>
                                 ))}
                             </select>
+                            <Tooltip id="font-family-tooltip"/>
+                            {/* <div> */}
+                                <button className='editor-btn' onClick={handleBringToFront} data-tooltip-id="bring-to-front-tooltip" data-tooltip-content="Bring to Front"><LuBringToFront /></button>
+                                <Tooltip id="bring-to-front-tooltip"/>
+                                {/* For image upload */}
+                                <button className='editor-btn' onClick={() => {/* Trigger file input click */ document.getElementById('imageUpload').click(); }} data-tooltip-id="img-upload-tooltip" data-tooltip-content="Upload Image">
+                                    <MdAddPhotoAlternate />
+                                </button>
+                                <Tooltip id="img-upload-tooltip" />
+                                <input type="file" id="imageUpload" accept="image/*" onChange={handleImageUploadToCanvas} style={{ display: 'none' }} /> {/* Hidden input */}
+                                {/* For Background image upload */}
+                                <button className='editor-btn' onClick={() => {/* Trigger file input click */ document.getElementById('backgroundUpload').click(); }} data-tooltip-id="bg-img-upload-tooltip" data-tooltip-content="Custom Background Image" >
+                                    <MdImage /> 
+                                </button>
+                                <Tooltip id="bg-img-upload-tooltip" />
+                                <input type="file" id="backgroundUpload" accept="image/*" onChange={handleBackgroundImageUpload} style={{ display: 'none' }} /> {/* Hidden input */}
+                            {/* </div> */}
                         </div>
                     </div>
                      <canvas ref={modalCanvasRef}></canvas>
