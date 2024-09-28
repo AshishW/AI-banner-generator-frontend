@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { fabric } from 'fabric';
-import BannerEditor from './NewBannerEditor';
 import './AIBannerGenerator.css';
 import ConfettiExplosion from 'react-confetti-explosion';
-import { MdAddPhotoAlternate, MdImage } from 'react-icons/md';
+import { MdAddPhotoAlternate, MdImage, MdDelete } from 'react-icons/md';
 import { LuBringToFront } from "react-icons/lu";
+
+
 import { Tooltip } from 'react-tooltip'
 
 const AIBannerGenerator = () => {
@@ -41,12 +42,11 @@ const AIBannerGenerator = () => {
     const [resolution, setResolution] = useState('1360x800');
     const [customWidth, setCustomWidth] = useState('');
     const [customHeight, setCustomHeight] = useState('');
-    const [colorPalette, setColorPalette] = useState(['#f7705c', '#a6fbff', '#a08cff', '#00ff97']);
+    const [colorPalette, setColorPalette] = useState(['#a40098', '#dca0d7', '#c8aaf7', '#e6bdb0']);
     const [images, setImages] = useState([]);
     const [bannerPreview, setBannerPreview] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-    const [showBannerEditor, setShowBannerEditor] = useState(false);
     const [showThemeInput, setShowThemeInput] = useState(false);
     const [showModal, setShowModal] = useState(false); // New state for modal
     const modalCanvasRef = useRef(null);
@@ -277,6 +277,9 @@ const AIBannerGenerator = () => {
             const [width, height] = localStorage.getItem('canvasResolution').split('x').map(Number);
             newCanvas.setWidth(width);
             newCanvas.setHeight(height);
+            newCanvas.selectionLineWidth = 2;
+            newCanvas.cornerColor = 'black'
+            
             
             //resize rendered canvas to rescale it so that doesn't go out of view
             const canvasContainer = document.querySelector(".canvas-container");
@@ -383,6 +386,14 @@ const AIBannerGenerator = () => {
         }
     };
 
+    const handleDeleteSelected = () => {
+        if (modalCanvas && modalCanvas.getActiveObject()) {
+            modalCanvas.remove(modalCanvas.getActiveObject());
+            modalCanvas.discardActiveObject();
+            modalCanvas.renderAll();
+        }
+    };
+
 
     const closeModal = () => {
         if (modalCanvas) {
@@ -433,12 +444,10 @@ const AIBannerGenerator = () => {
     };
 
     return (
-        showBannerEditor ? <BannerEditor /> :  
         <>
-     
         <div className="container">
         <div className="horizontal-line-break"></div>
-        <h1>AI Banner Generator</h1>
+        <h1>ArtVisionX AI</h1>
             <div id="controls">
                 <div className="input-group">
                     <label htmlFor="promotion">💹 Promotion:</label>
@@ -504,7 +513,6 @@ const AIBannerGenerator = () => {
                     <select id="resolution" value={resolution} onChange={handleResolutionChange}>
                         <option value="1360x800">1360x800</option>
                         <option value="1920x600">1920x600</option>
-                        <option value="1024x480">1024x480</option>
                         <option value="1024x512">1024x512</option>
                         <option value="custom">Custom</option>
                     </select>
@@ -568,12 +576,12 @@ const AIBannerGenerator = () => {
             )}
         </div>
 
-        {/* Modal Overlay */}
+        {/* Modal Overlay editor*/}
         {showModal && (
             <div className="modal-overlay">
                 <div className="modal-content">
                     <button className="close-button" onClick={closeModal}>×</button>
-                    <h2>Advanced Editor</h2>
+                    <h2>Design Editor</h2>
                     <div className='banner-customization-background-gradient-container'>
                         <div className="banner-customization">
                             <input 
@@ -624,6 +632,11 @@ const AIBannerGenerator = () => {
                                 </button>
                                 <Tooltip id="bg-img-upload-tooltip" />
                                 <input type="file" id="backgroundUpload" accept="image/*" onChange={handleBackgroundImageUpload} style={{ display: 'none' }} /> {/* Hidden input */}
+                                {/* for delete selection */}
+                                <button className='editor-btn' onClick={handleDeleteSelected} data-tooltip-id="delete-selection-tooltip" data-tooltip-content="Delete Selection">
+                                    <MdDelete/>
+                                </button>
+                                <Tooltip id="delete-selection-tooltip" />
                             {/* </div> */}
                         </div>
                     </div>

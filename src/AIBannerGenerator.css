@@ -433,7 +433,7 @@ button:hover {
 }
 
 .save-button {
-    margin-top: 20px;
+    margin-top: 24px;
     background: linear-gradient(45deg, var(--accent-dark), var(--accent-light));
     transition: all 0.3s ease;
     padding: 12px 20px;
@@ -477,7 +477,7 @@ button:hover {
     width: fit-content;
     position: relative;
     border-radius: 8px;
-    margin-top: 20px;
+    /* margin-top: 20px; */
     padding: 1px 1px;
     background: linear-gradient(45deg, rgb(212, 186, 255), rgb(132, 245, 255), rgb(204, 133, 255), rgb(189, 177, 255),  rgb(144, 242, 211));
 }
@@ -550,3 +550,30 @@ button:hover {
 }
 
 
+/* New Media Query for smaller mobile devices */
+@media (max-width: 480px) {
+    .container{
+        display: flex;
+        overflow-x: hidden;
+        flex-direction: column;
+    }
+    #preview-placeholder{
+        max-height: 200px !important;
+    }
+    .banner-customization input[type="color"] {
+        width: 100%; /* Full width color input */
+    }
+    .banner-customization input[type="number"],
+    .banner-customization select {
+        width: 100%; /* Full width number input and select */
+    }
+    .modal-content {
+        padding: 10px; /* Reduce padding */
+    }
+    .modal-canvas {
+        height: 60%; /* Adjust canvas height */
+    }
+    .close-button {
+        font-size: 1.2rem; /* Smaller close button */
+    }
+}
