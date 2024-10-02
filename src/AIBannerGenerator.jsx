@@ -130,7 +130,7 @@ const AIBannerGenerator = () => {
                 images: imageDataList
             };
             console.log('Request data:', requestData);
-            const response = await fetch('http://localhost:5000/generate_banner', {
+            const response = await fetch('https://ai-banner-generator.onrender.com/generate_banner', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
