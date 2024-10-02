@@ -1,5 +1,7 @@
 # ArtVisionX AI
 
+![ArtVisionX Banner Generator](./assets/ui_image.png)
+
 
 [System Design Documentation](systemarchitecture.md)
 

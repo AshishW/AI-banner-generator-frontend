@@ -1,7 +1,7 @@
-This React app implements a single-page application (SPA) for generating and editing banner images using an AI backend. Here's a detailed breakdown of its system design:
 
 ![ArtVisionX Architecture](./src/assets/ArtVisionX_Architecture.png)
 
+This React app implements a single-page application (SPA) for generating and editing banner images using an AI backend. Here's a detailed breakdown of its system design:
 
 
 **1. Frontend (React):**
