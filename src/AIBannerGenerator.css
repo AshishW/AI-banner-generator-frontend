@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Days+One&display=swap');
 :root {
     /* --bg-color: #1e1e2e; */
     --bg-color: #10151d;
@@ -41,6 +42,7 @@ h1 {
     font-size: 2.5rem;
     margin-bottom: 15px;
     margin-top: 10px;
+    font-family:"Days One", sans-serif;;
 }
 
 /* horizontal line break with 4 gradient colors*/
@@ -408,6 +410,10 @@ button:hover {
     align-items: center;
 }
 
+.modal-content h2{
+    font-family: "Days One", sans-serif;
+}
+
 .close-button {
     position: absolute;
     top: 15px;
@@ -483,7 +489,7 @@ button:hover {
 }
 
 .banner-customization input[type="color"] {
-    width: 45px;
+    width: 30px;
     height: 30px;
     padding: 0;
     border: 1px solid #3e5378;
@@ -509,8 +515,18 @@ button:hover {
     border-radius: 4px;
 }
 
+.banner-customization button{
+    background-color: #3e94ff;
+}
+.banner-customization button:hover{
+    background-color: var(--accent-light);
+}
+.banner-customization button:active{
+    background-color: #3e5378;
+}
+
 .editor-btn:active{
-    background-color: #192945;
+    background-color:#665da4;
 }
 
 .modal-content {

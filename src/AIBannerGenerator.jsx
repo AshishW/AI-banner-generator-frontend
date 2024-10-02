@@ -4,6 +4,7 @@ import './AIBannerGenerator.css';
 import ConfettiExplosion from 'react-confetti-explosion';
 import { MdAddPhotoAlternate, MdImage, MdDelete } from 'react-icons/md';
 import { LuBringToFront } from "react-icons/lu";
+import { FaEdit, FaDownload } from 'react-icons/fa';
 
 
 import { Tooltip } from 'react-tooltip'
@@ -53,7 +54,8 @@ const AIBannerGenerator = () => {
     const [modalCanvas, setModalCanvas] = useState(null);
     const [selectedObject, setSelectedObject] = useState(null);
     const [renderedBannerTextData, setRenderedBannerTextData] = useState([])
-
+    const [canvasDataState, setCanvasDataState] = useState(null)
+    const [CanvasResolutionState, setCanvasResolutionState] = useState('1360x800')
     // for confetti
     const [isExploding, setIsExploding] = useState(false);
 
@@ -249,8 +251,14 @@ const AIBannerGenerator = () => {
 
     const openAdvancedEditor = () => {
         const canvasJSON = JSON.stringify(canvas.toJSON());
-        localStorage.setItem('canvasData', canvasJSON); 
-        localStorage.setItem('canvasResolution', `${canvas.width}x${canvas.height}`);
+        try {
+            localStorage.setItem('canvasData', canvasJSON);
+            localStorage.setItem('canvasResolution', `${canvas.width}x${canvas.height}`);
+        } catch (error) {
+            console.log('Error saving canvas data to localStorage:', error); 
+        }
+        setCanvasDataState(canvasJSON);
+        setCanvasResolutionState(`${canvas.width}x${canvas.height}`);
         setShowModal(true);
     };
 
@@ -260,7 +268,9 @@ const AIBannerGenerator = () => {
             const newCanvas = new fabric.Canvas(modalCanvasRef.current);
             setModalCanvas(newCanvas);
 
-            const canvasData = localStorage.getItem('canvasData');
+            // const canvasData = localStorage.getItem('canvasData');
+            const canvasData = canvasDataState;
+            
             if (canvasData) {
                 newCanvas.loadFromJSON(canvasData, () => {
                     newCanvas.renderAll();
@@ -271,10 +281,33 @@ const AIBannerGenerator = () => {
                             obj.evented = false;
                         }
                     });
+                // experiment start
+                const objectsData = newCanvas.getObjects().map(obj => {
+                    let data = {};
+                    data.type = obj.type;
+                    data.left = `${(obj.left / newCanvas.getWidth()) * 100}%`;
+                    data.bottom = `${(obj.top / newCanvas.getHeight()) * 100}%`;
+                    data.width = `${(obj.width / newCanvas.getWidth()) * 100}%`;
+                    data.height = `${(obj.height / newCanvas.getHeight()) * 100}%`;
+                    data.fontSize = obj.fontSize;
+                    data.fill = obj.fill;
+                    data.fontWeight = obj.fontWeight;
+                    data.fontStyle = obj.fontStyle;
+                    data.textAlign = obj.textAlign;
+                    data.text = obj.text;
+                    data.fontFamily = obj.fontFamily;
+                    if (obj.type === 'image') {
+                        data.src = obj.src;
+                    }
+                    return data;
+                });
+                console.log({ objects: objectsData });
+                //experiment end
                 });
             }
 
-            const [width, height] = localStorage.getItem('canvasResolution').split('x').map(Number);
+            // const [width, height] = localStorage.getItem('canvasResolution').split('x').map(Number);
+            const [width, height] = CanvasResolutionState.split('x').map(Number);
             newCanvas.setWidth(width);
             newCanvas.setHeight(height);
             newCanvas.selectionLineWidth = 2;
@@ -398,7 +431,12 @@ const AIBannerGenerator = () => {
     const closeModal = () => {
         if (modalCanvas) {
             const updatedCanvasJSON = JSON.stringify(modalCanvas.toJSON());
-            localStorage.setItem('canvasData', updatedCanvasJSON);
+            try{
+                localStorage.setItem('canvasData', updatedCanvasJSON);
+            }catch(error){
+                console.log("Couldn't update localstorage due to size quota")
+            }
+            setCanvasDataState(updatedCanvasJSON)
             
             // Update the main canvas with changes from the modal
             canvas.loadFromJSON(updatedCanvasJSON, () => {
@@ -544,8 +582,8 @@ const AIBannerGenerator = () => {
                        {isExploding && <ConfettiExplosion zIndex={1000} width={1000} particleCount={200}/>}
                         <img id="banner-preview" src={bannerPreview} alt="Banner Preview" />
                         <div className='banner-buttons-container'>
-                            <button id="advanced-edit-button" onClick={openAdvancedEditor}>⚙️Edit Design</button>
-                            <button id="download-button" onClick={downloadBanner}>Download Banner</button>
+                            <button id="advanced-edit-button" onClick={openAdvancedEditor}><FaEdit/> Edit Design</button>
+                            <button id="download-button" onClick={downloadBanner}><FaDownload/> Download Banner</button>
                         </div>
                     </>
                 ) : (
@@ -584,6 +622,7 @@ const AIBannerGenerator = () => {
                     <h2>Design Editor</h2>
                     <div className='banner-customization-background-gradient-container'>
                         <div className="banner-customization">
+                            <div>
                             <input 
                                 type="color" 
                                 value={selectedObject ? selectedObject.fill : "#dbfdff"}
@@ -591,6 +630,7 @@ const AIBannerGenerator = () => {
                                 data-tooltip-id="text-color-tooltip"
                                 data-tooltip-content="Text Color"
                             />
+                            </div>
                             <Tooltip id="text-color-tooltip"/>
                             <input 
                                 type="number" 
