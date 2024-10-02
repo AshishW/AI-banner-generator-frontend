@@ -3,6 +3,7 @@
 ![ArtVisionX Banner Generator](./src/assets/ui_image.png)
 
 
+## Documentation
 [System Design Documentation](systemarchitecture.md)
 
 This application allows users to generate custom banner images using Gemini AI.  Users input text, select themes, choose resolutions, and optionally upload images. The AI backend processes this information to create an advertisement banner, which is then displayed and can be further edited and downloaded.
