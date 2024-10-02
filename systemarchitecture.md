@@ -1,5 +1,9 @@
 This React app implements a single-page application (SPA) for generating and editing banner images using an AI backend. Here's a detailed breakdown of its system design:
 
+![ArtVisionX Architecture](./src/assets/ArtVisionX_Architecture.png)
+
+
+
 **1. Frontend (React):**
 
 * **Component Structure:** The core functionality resides within the `AIBannerGenerator` component.  This component manages user input, communicates with the backend, renders the banner preview, and handles the advanced editor modal.
