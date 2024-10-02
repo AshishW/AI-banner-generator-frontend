@@ -3,6 +3,11 @@
 ![ArtVisionX Banner Generator](./src/assets/ui_image.png)
 
 
+## Backend Flask Repository
+
+[Backend Repository](https://github.com/AshishW/AI-Banner-Generator)
+
+
 ## Documentation
 [System Design Documentation](systemarchitecture.md)
 
